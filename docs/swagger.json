@@ -1,0 +1,277 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "This is a simple PaaS API for Laravel applications on Kubernetes.",
+        "title": "my-paas API",
+        "contact": {},
+        "version": "1.0"
+    },
+    "host": "localhost:8081",
+    "basePath": "/",
+    "paths": {
+        "/apps": {
+            "get": {
+                "description": "List all Laravel deployments in a namespace.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "apps"
+                ],
+                "summary": "List all apps",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Namespace (defaults to 'default')",
+                        "name": "namespace",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.response"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Create a new Laravel deployment and trigger initial build.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "apps"
+                ],
+                "summary": "Create a new Laravel app",
+                "parameters": [
+                    {
+                        "description": "App details",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/api.createAppRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/api.response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.response"
+                        }
+                    }
+                }
+            }
+        },
+        "/apps/{name}": {
+            "get": {
+                "description": "Get the status of a single app.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "apps"
+                ],
+                "summary": "Get app status",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "App name",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Namespace (defaults to 'default')",
+                        "name": "namespace",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.response"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.response"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete an app's deployment.",
+                "tags": [
+                    "apps"
+                ],
+                "summary": "Delete an app",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "App name",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Namespace (defaults to 'default')",
+                        "name": "namespace",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.response"
+                        }
+                    }
+                }
+            }
+        },
+        "/apps/{name}/build": {
+            "post": {
+                "description": "Clone, build Docker image, push, then roll the deployment.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "builds"
+                ],
+                "summary": "Trigger a new build",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "App name",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Build details",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/api.buildRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "202": {
+                        "description": "Accepted",
+                        "schema": {
+                            "$ref": "#/definitions/api.response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.response"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "api.buildRequest": {
+            "type": "object",
+            "properties": {
+                "commit_hash": {
+                    "description": "CommitHash pins the build to a specific commit (also used to name the Job).",
+                    "type": "string"
+                },
+                "namespace": {
+                    "description": "Namespace to run the build Job in (defaults to \"default\").",
+                    "type": "string"
+                },
+                "repo_url": {
+                    "description": "RepoURL is the git repository to clone and build.",
+                    "type": "string"
+                }
+            }
+        },
+        "api.createAppRequest": {
+            "type": "object",
+            "properties": {
+                "app_name": {
+                    "description": "e.g. \"my-laravel-app\"",
+                    "type": "string"
+                },
+                "commit_hash": {
+                    "description": "e.g. \"latest\"",
+                    "type": "string"
+                },
+                "namespace": {
+                    "description": "defaults to \"default\"",
+                    "type": "string"
+                },
+                "replicas": {
+                    "description": "defaults to 1",
+                    "type": "integer"
+                },
+                "repo_url": {
+                    "description": "e.g. \"https://github.com/laravel/laravel.git\"",
+                    "type": "string"
+                }
+            }
+        },
+        "api.response": {
+            "type": "object",
+            "properties": {
+                "data": {},
+                "message": {
+                    "type": "string"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        }
+    }
+}
